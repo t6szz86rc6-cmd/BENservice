@@ -33,6 +33,22 @@ jobs:
         run: |
           mkdir -p site
           cp index.html site/index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('site/index.html')
+          s = p.read_text(encoding='utf-8')
+          old_new = "$('lines').innerHTML='';addLine();laborModeUi();"
+          new_new = "$('lines').innerHTML='';laborModeUi();"
+          old_edit = "if(!(r.data||[]).length)addLine();laborModeUi();"
+          new_edit = "laborModeUi();"
+          if old_new not in s:
+              raise SystemExit('Nie znaleziono kodu pustej części dla nowego zlecenia')
+          if old_edit not in s:
+              raise SystemExit('Nie znaleziono kodu pustej części dla edycji zlecenia')
+          s = s.replace(old_new, new_new, 1)
+          s = s.replace(old_edit, new_edit, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
           touch site/.nojekyll
           test -s site/index.html
 
