@@ -37,6 +37,8 @@ jobs:
           from pathlib import Path
           p = Path('site/index.html')
           s = p.read_text(encoding='utf-8')
+
+          # Nowe/edytowane zlecenie: nie twórz pustej pozycji części automatycznie.
           old_new = "$('lines').innerHTML='';addLine();laborModeUi();"
           new_new = "$('lines').innerHTML='';laborModeUi();"
           old_edit = "if(!(r.data||[]).length)addLine();laborModeUi();"
@@ -47,6 +49,20 @@ jobs:
               raise SystemExit('Nie znaleziono kodu pustej części dla edycji zlecenia')
           s = s.replace(old_new, new_new, 1)
           s = s.replace(old_edit, new_edit, 1)
+
+          # Karta zlecenia: przycisk Edytuj obok X.
+          old_head = '<dialog id="orderInfoD"><div class="dialogHead"><h2>Karta zlecenia</h2><button type="button" class="dialogClose" onclick="orderInfoD.close()">×</button></div><div id="orderInfoBody"></div></dialog>'
+          new_head = '<dialog id="orderInfoD"><div class="dialogHead"><h2>Karta zlecenia</h2><div style="display:flex;gap:8px;align-items:center"><button type="button" onclick="if(orderInfoD.dataset.orderId){let id=orderInfoD.dataset.orderId;orderInfoD.close();editOrder(id)}">Edytuj</button><button type="button" class="dialogClose" onclick="orderInfoD.close()">×</button></div></div><div id="orderInfoBody"></div></dialog>'
+          if old_head not in s:
+              raise SystemExit('Nie znaleziono nagłówka karty zlecenia')
+          s = s.replace(old_head, new_head, 1)
+
+          old_show = "async function showOrderInfo(id){let o=D.orders.find(x=>x.id===id);"
+          new_show = "async function showOrderInfo(id){orderInfoD.dataset.orderId=id;let o=D.orders.find(x=>x.id===id);"
+          if old_show not in s:
+              raise SystemExit('Nie znaleziono funkcji podglądu zlecenia')
+          s = s.replace(old_show, new_show, 1)
+
           p.write_text(s, encoding='utf-8')
           PY
           touch site/.nojekyll
